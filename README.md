@@ -29,6 +29,11 @@ Everyone in the lobby needs the same version of the mod. If yours is old you'll 
 
 Delete `override.cfg` and the `cirno_goes_online/` folder from the game directory.
 
+## Credits
+
+**New Wunk City Modding Discord Server** - helping me when I was stuck on some problems.
+**Caesor** - reoccurring playtester
+
 ## License
 
 MIT
