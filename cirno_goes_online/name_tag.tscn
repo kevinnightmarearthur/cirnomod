@@ -1,0 +1,14 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://cirno_goes_online/name_tag.gd" id="1"]
+
+[node name="NameTag" type="Label3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.88, 0)
+cast_shadow = 0
+pixel_size = 0.006
+billboard = 1
+no_depth_test = true
+outline_modulate = Color(0, 0, 0, 1)
+font_size = 64
+outline_size = 24
+script = ExtResource("1")
