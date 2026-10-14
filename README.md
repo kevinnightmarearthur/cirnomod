@@ -31,8 +31,8 @@ Delete `override.cfg` and the `cirno_goes_online/` folder from the game director
 
 ## Credits
 
-**New Wunk City Modding Discord Server** - helping me when I was stuck on some problems.
-**Caesor** - reoccurring playtester
+- **New Wunk City Modding Discord Server** - helping me when I was stuck on some problems.
+- **Caesor** - reoccurring playtester
 
 ## License
 
