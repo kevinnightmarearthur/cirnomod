@@ -10,6 +10,8 @@ const MAX_PLAYERS := 8
 const SEND_RATE = 30.0
 const SILENCE_TIMEOUT_MS = 3000 # menus, loading, or they left
 const SETTINGS_PATH := "user://cirno_goes_online.cfg"
+const BUMP_RANGE = 0.6 # cirnos hitbox is 0.6 wide and 1.5 tall
+const BUMP_PUSH = 8.0
 
 const STATE_CHANNEL := 0
 const EVENT_CHANNEL := 1
@@ -59,6 +61,7 @@ var _remote_frogs = {}
 var _colors = {}
 var _controls_locked := false
 var _flying_items = {} # item -> the cirno it flies to
+var _bump_cooldown = 0.0
 var _bump_sound: AudioStreamPlayer
 var _head_jump_sound: AudioStreamPlayer
 
@@ -400,6 +403,7 @@ func _physics_process(delta: float) -> void:
 	if Globals.CURRENT_GAME_STATE != Globals.GAME_STATE.MAIN_MENU and is_instance_valid(Globals.PLAYER):
 		_send_new_pickups()
 		_send_new_frogs()
+		_check_bumps(delta)
 		_send_cooldown -= delta
 		if _send_cooldown <= 0.0:
 			_send_cooldown = 1.0 / SEND_RATE
@@ -416,6 +420,32 @@ func _move_flying_items() -> void:
 			_flying_items.erase(item)
 		else:
 			item.global_position = target.global_position
+
+
+# other cirnos have no collision so we check against them
+func _check_bumps(delta: float) -> void:
+	_bump_cooldown -= delta
+	var player = Globals.PLAYER
+	for id in remote_cirnos:
+		var other = remote_cirnos[id]
+		if not is_instance_valid(other):
+			continue
+		var offset = player.global_position - other.global_position
+		offset.y = 0.0
+		if offset.length() < BUMP_RANGE and _bump_cooldown <= 0.0:
+			_bump_away_from(other)
+
+
+func _bump_away_from(other: Node3D) -> void:
+	var player = Globals.PLAYER
+	var away = player.global_position - other.global_position
+	away.y = 0.0
+	player.velocity.x = 0.0
+	player.velocity.z = 0.0
+	player.apply_impulse(away.normalized() * BUMP_PUSH)
+	player._skin_parent.set_looney_curve(player.looney_bouncy_curve_0, 0.66, -0.5, "y") # same squish as bonking a wall
+	_bump_sound.play()
+	_bump_cooldown = 0.5
 
 
 func _send(id: int, channel: int, message: Dictionary) -> void:
