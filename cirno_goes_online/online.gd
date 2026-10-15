@@ -59,6 +59,8 @@ var _remote_frogs = {}
 var _colors = {}
 var _controls_locked := false
 var _flying_items = {} # item -> the cirno it flies to
+var _bump_sound: AudioStreamPlayer
+var _head_jump_sound: AudioStreamPlayer
 
 
 func _ready() -> void:
@@ -68,8 +70,19 @@ func _ready() -> void:
 	# the game only saves keys for actions in this list
 	input_menu.input_actions["CHAT"] = "CHAT"
 	add_child(MenuPatches.new())
+	_bump_sound = _make_sound("bump.mp3")
+	_head_jump_sound = _make_sound("headjump.mp3")
 	# wait for the main scene, a steam invite opens the lobby menu straight away
 	_connect_steam.call_deferred()
+
+
+# our mp3s arent imported like game sounds so we load it via file
+func _make_sound(file_name: String) -> AudioStreamPlayer:
+	var sound = AudioStreamPlayer.new()
+	sound.stream = AudioStreamMP3.load_from_file("res://cirno_goes_online/" + file_name)
+	sound.bus = "SoundEffects" # so the sfx volume slider works on it
+	add_child(sound)
+	return sound
 
 
 func _connect_steam() -> void:
