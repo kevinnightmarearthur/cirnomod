@@ -431,8 +431,15 @@ func _check_bumps(delta: float) -> void:
 		if not is_instance_valid(other):
 			continue
 		var offset = player.global_position - other.global_position
+		var height = offset.y
 		offset.y = 0.0
-		if offset.length() < BUMP_RANGE and _bump_cooldown <= 0.0:
+		if offset.length() > BUMP_RANGE:
+			continue
+		# landing on their head works like an extra jump
+		if height > 0.75 and height < 1.7 and player.velocity.y <= 0.0 and not player.is_on_floor():
+			player.set_state(PlayerStates.State.JUMPING)
+			_head_jump_sound.play()
+		elif abs(height) < 0.75 and _bump_cooldown <= 0.0:
 			_bump_away_from(other)
 
 
