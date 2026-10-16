@@ -513,6 +513,7 @@ func _send_new_frogs() -> void:
 func _send_ice_platform() -> void:
 	var platform = Globals.PLAYER.current_ice_platform
 	if is_instance_valid(platform) and platform != _sent_ice_platform:
+		platform.suicide_available_time = INF # cant press special to delete it online, others would still see it
 		_sent_ice_platform = platform
 		_send_to_others(EVENT_CHANNEL, {"ice_platform": platform.global_position})
 
