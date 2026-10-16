@@ -397,6 +397,14 @@ func _show_multiplayer_menu() -> void:
 	Globals.MENU_NODE.add_child(MultiplayerMenuScene.instantiate())
 
 
+# for testing purposes
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_KP_7:
+		if is_host() and Globals.CURRENT_GAME_STATE == Globals.GAME_STATE.IN_GAME:
+			Globals.MAIN_NODE.game_power = 4.0
+			Globals.PLAYER._determine_max_energy() # unlocks the abilities like picking up power does
+
+
 func _physics_process(delta: float) -> void:
 	if not in_lobby():
 		return
@@ -505,6 +513,7 @@ func _send_new_frogs() -> void:
 func _send_ice_platform() -> void:
 	var platform = Globals.PLAYER.current_ice_platform
 	if is_instance_valid(platform) and platform != _sent_ice_platform:
+		_sent_ice_platform = platform
 		_send_to_others(EVENT_CHANNEL, {"ice_platform": platform.global_position})
 
 
@@ -559,9 +568,14 @@ func _open_frog(frog_id: int) -> void:
 func _place_ice_platform(owner_id: int, at: Vector3) -> void:
 	if not _playing_online or not is_instance_valid(Globals.PLAYER):
 		return
+	# the game only keeps one ice platform per cirno
+	var old_platform = _remote_ice_platforms.get(owner_id)
+	if is_instance_valid(old_platform):
+		old_platform.get_node("Geometry").krill_yourself()
 	var platform = Globals.PLAYER.ice_platforms.pick_random().instantiate()
 	Globals.LEVEL_NODE.add_child(platform)
 	platform.global_position = at
+	platform.get_node("Geometry").suicide_available_time = INF # otherwise pressing special deletes it on our screen
 	_remote_ice_platforms[owner_id] = platform
 
 
