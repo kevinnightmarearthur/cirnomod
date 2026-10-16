@@ -64,6 +64,8 @@ var _flying_items = {} # item -> the cirno it flies to
 var _bump_cooldown = 0.0
 var _bump_sound: AudioStreamPlayer
 var _head_jump_sound: AudioStreamPlayer
+var _remote_ice_platforms = {} # steam id -> their ice platform
+var _sent_ice_platform: Node3D
 
 
 func _ready() -> void:
@@ -403,6 +405,7 @@ func _physics_process(delta: float) -> void:
 	if Globals.CURRENT_GAME_STATE != Globals.GAME_STATE.MAIN_MENU and is_instance_valid(Globals.PLAYER):
 		_send_new_pickups()
 		_send_new_frogs()
+		_send_ice_platform()
 		_check_bumps(delta)
 		_send_cooldown -= delta
 		if _send_cooldown <= 0.0:
@@ -499,6 +502,12 @@ func _send_new_frogs() -> void:
 			_send_to_others(EVENT_CHANNEL, {"frog": frog_id})
 
 
+func _send_ice_platform() -> void:
+	var platform = Globals.PLAYER.current_ice_platform
+	if is_instance_valid(platform) and platform != _sent_ice_platform:
+		_send_to_others(EVENT_CHANNEL, {"ice_platform": platform.global_position})
+
+
 func _receive_events() -> void:
 	for message in Steam.receiveMessagesOnChannel(EVENT_CHANNEL, 64):
 		var sender: int = message["identity"]
@@ -509,6 +518,8 @@ func _receive_events() -> void:
 			_collect_for(sender, data.pickup)
 		elif data.has("frog"):
 			_open_frog(data.frog)
+		elif data.has("ice_platform"):
+			_place_ice_platform(sender, data.ice_platform)
 		elif data.has("chat") and is_instance_valid(_chat):
 			_chat.add_message(player_name(sender), player_color(sender), str(data.chat).left(140))
 		elif data.has("world_request") and _playing_online:
@@ -543,6 +554,15 @@ func _open_frog(frog_id: int) -> void:
 			frog.set_status(true)
 			frog.current_look_time = frog.look_time_req + 1.0
 			return
+
+
+func _place_ice_platform(owner_id: int, at: Vector3) -> void:
+	if not _playing_online or not is_instance_valid(Globals.PLAYER):
+		return
+	var platform = Globals.PLAYER.ice_platforms.pick_random().instantiate()
+	Globals.LEVEL_NODE.add_child(platform)
+	platform.global_position = at
+	_remote_ice_platforms[owner_id] = platform
 
 
 func _find_item(item_id: int) -> Item:
