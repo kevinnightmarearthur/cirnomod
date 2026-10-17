@@ -339,6 +339,7 @@ func _on_lobby_chat_update(id: int, changed_id: int, _making_change_id: int, cha
 	if not joined:
 		Steam.closeSessionWithUser(changed_id)
 		_remove_remote_cirno(changed_id)
+		_remove_ice_platform(changed_id)
 		_colors.erase(changed_id)
 		if waiting_for_world and changed_id == _world_source:
 			play()
@@ -569,15 +570,19 @@ func _open_frog(frog_id: int) -> void:
 func _place_ice_platform(owner_id: int, at: Vector3) -> void:
 	if not _playing_online or not is_instance_valid(Globals.PLAYER):
 		return
-	# the game only keeps one ice platform per cirno
-	var old_platform = _remote_ice_platforms.get(owner_id)
-	if is_instance_valid(old_platform):
-		old_platform.get_node("Geometry").krill_yourself()
+	_remove_ice_platform(owner_id) # the game only keeps one ice platform per cirno
 	var platform = Globals.PLAYER.ice_platforms.pick_random().instantiate()
 	Globals.LEVEL_NODE.add_child(platform)
 	platform.global_position = at
 	platform.get_node("Geometry").suicide_available_time = INF # otherwise pressing special deletes it on our screen
 	_remote_ice_platforms[owner_id] = platform
+
+
+func _remove_ice_platform(owner_id: int) -> void:
+	var platform = _remote_ice_platforms.get(owner_id)
+	if is_instance_valid(platform):
+		platform.get_node("Geometry").krill_yourself()
+	_remote_ice_platforms.erase(owner_id)
 
 
 func _find_item(item_id: int) -> Item:
