@@ -339,7 +339,6 @@ func _on_lobby_chat_update(id: int, changed_id: int, _making_change_id: int, cha
 	if not joined:
 		Steam.closeSessionWithUser(changed_id)
 		_remove_remote_cirno(changed_id)
-		_remove_ice_platform(changed_id)
 		_colors.erase(changed_id)
 		if waiting_for_world and changed_id == _world_source:
 			play()
@@ -628,4 +627,5 @@ func _remove_remote_cirno(id: int) -> void:
 	if is_instance_valid(remote_cirno):
 		remote_cirno.queue_free()
 	remote_cirnos.erase(id)
+	_remove_ice_platform(id)
 	_update_name_tags()
