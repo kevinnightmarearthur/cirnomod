@@ -613,7 +613,7 @@ func _receive_states() -> void:
 			_update_name_tags()
 			# they missed our ice platform if they just got here
 			if is_instance_valid(_sent_ice_platform):
-				_send_to_others(EVENT_CHANNEL, {"ice_platform": _sent_ice_platform.global_position})
+				_send(sender, EVENT_CHANNEL, {"ice_platform": _sent_ice_platform.global_position})
 		remote_cirno.apply_state(state)
 
 
