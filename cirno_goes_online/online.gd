@@ -515,7 +515,11 @@ func _send_ice_platform() -> void:
 	if is_instance_valid(platform) and platform != _sent_ice_platform:
 		platform.get_node("Geometry").suicide_available_time = INF # cant press special to delete it online, others would still see it
 		_sent_ice_platform = platform
-		_send_to_others(EVENT_CHANNEL, {"ice_platform": platform.global_position})
+		_send_to_others(EVENT_CHANNEL, {
+			"ice_platform": platform.global_position,
+			"ice_look": Globals.PLAYER.ice_platforms.find(platform),
+			"ice_turn": platform.get_node("Geometry").rotation.y,
+		})
 
 
 func _receive_events() -> void:
@@ -529,7 +533,7 @@ func _receive_events() -> void:
 		elif data.has("frog"):
 			_open_frog(data.frog)
 		elif data.has("ice_platform"):
-			_place_ice_platform(sender, data.ice_platform)
+			_place_ice_platform(sender, data)
 		elif data.has("chat") and is_instance_valid(_chat):
 			_chat.add_message(player_name(sender), player_color(sender), str(data.chat).left(140))
 		elif data.has("world_request") and _playing_online:
@@ -566,13 +570,14 @@ func _open_frog(frog_id: int) -> void:
 			return
 
 
-func _place_ice_platform(owner_id: int, at: Vector3) -> void:
+func _place_ice_platform(owner_id: int, data: Dictionary) -> void:
 	if not _playing_online or not is_instance_valid(Globals.PLAYER):
 		return
 	_remove_ice_platform(owner_id) # the game only keeps one ice platform per cirno
-	var platform = Globals.PLAYER.ice_platforms.pick_random().instantiate()
+	var platform = Globals.PLAYER.ice_platforms[data.ice_look].instantiate()
+	platform.get_node("Geometry").rotation.y = data.ice_turn
 	Globals.LEVEL_NODE.add_child(platform)
-	platform.global_position = at
+	platform.global_position = data.ice_platform
 	platform.get_node("Geometry").suicide_available_time = INF # otherwise pressing special deletes it on our screen
 	_remote_ice_platforms[owner_id] = platform
 
