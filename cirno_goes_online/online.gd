@@ -37,6 +37,8 @@ const NameTagScene := preload("res://cirno_goes_online/name_tag.tscn")
 const MultiplayerMenuScene := preload("res://cirno_goes_online/multiplayer_menu.tscn")
 const ChatScene := preload("res://cirno_goes_online/chat.tscn")
 const MenuPatches := preload("res://cirno_goes_online/menu_patches.gd")
+const CirnoColors := preload("res://cirno_goes_online/cirno_colors.gd")
+const PLAYER_SCENE := "res://scenes/player/player/player.tscn"
 
 var lobby_id := 0
 var remote_cirnos := {}  # steam id -> their cirno
@@ -44,6 +46,7 @@ var waiting_for_world := false
 
 var nickname := ""
 var show_name_tags := true
+var cirno_colors := CirnoColors.default_colors()
 
 var _send_cooldown = 0.0
 var _own_tag: Node3D
@@ -66,6 +69,7 @@ var _bump_sound: AudioStreamPlayer
 var _head_jump_sound: AudioStreamPlayer
 var _remote_ice_platforms = {} # steam id -> their ice platform
 var _sent_ice_platform: Node3D
+var _sent_ice_message = {}
 
 
 func _ready() -> void:
@@ -75,6 +79,7 @@ func _ready() -> void:
 	# the game only saves keys for actions in this list
 	input_menu.input_actions["CHAT"] = "CHAT"
 	add_child(MenuPatches.new())
+	get_tree().node_added.connect(_on_node_added)
 	_bump_sound = _make_sound("bump.mp3")
 	_head_jump_sound = _make_sound("headjump.mp3")
 	# wait for the main scene, a steam invite opens the lobby menu straight away
@@ -233,6 +238,8 @@ func _settings_changed() -> void:
 	var cfg = ConfigFile.new()
 	cfg.set_value("player", "nickname", nickname)
 	cfg.set_value("player", "show_name_tags", show_name_tags)
+	for region in cirno_colors:
+		cfg.set_value("colors", region, cirno_colors[region])
 	var err = cfg.save(SETTINGS_PATH)
 	if err != OK:
 		push_error("Cirno Goes Online: couldn't save settings, error " + str(err))
@@ -246,6 +253,17 @@ func _load_settings() -> void:
 	if cfg.load(SETTINGS_PATH) == OK:
 		nickname = cfg.get_value("player", "nickname", "")
 		show_name_tags = cfg.get_value("player", "show_name_tags", true)
+		for region in cirno_colors:
+			cirno_colors[region] = cfg.get_value("colors", region, cirno_colors[region])
+
+
+func _on_node_added(node: Node) -> void:
+	if node.scene_file_path == PLAYER_SCENE:
+		node.ready.connect(_recolor_own_cirno.bind(node), CONNECT_ONE_SHOT)
+
+
+func _recolor_own_cirno(player: Node) -> void:
+	CirnoColors.apply(player.get_node("%Skin/Armature/Skeleton3D"), cirno_colors)
 
 
 func _update_name_tags() -> void:
@@ -515,11 +533,12 @@ func _send_ice_platform() -> void:
 	if is_instance_valid(platform) and platform != _sent_ice_platform:
 		platform.get_node("Geometry").suicide_available_time = INF # cant press special to delete it online, others would still see it
 		_sent_ice_platform = platform
-		_send_to_others(EVENT_CHANNEL, {
+		_sent_ice_message = {
 			"ice_platform": platform.global_position,
-			"ice_look": Globals.PLAYER.ice_platforms.find(platform),
+			"ice_look": Globals.PLAYER.ice_platforms.find(load(platform.scene_file_path)),
 			"ice_turn": platform.get_node("Geometry").rotation.y,
-		})
+		}
+		_send_to_others(EVENT_CHANNEL, _sent_ice_message)
 
 
 func _receive_events() -> void:
@@ -575,11 +594,14 @@ func _place_ice_platform(owner_id: int, data: Dictionary) -> void:
 		return
 	_remove_ice_platform(owner_id) # the game only keeps one ice platform per cirno
 	var platform = Globals.PLAYER.ice_platforms[data.ice_look].instantiate()
-	platform.get_node("Geometry").rotation.y = data.ice_turn
 	Globals.LEVEL_NODE.add_child(platform)
 	platform.global_position = data.ice_platform
-	platform.get_node("Geometry").suicide_available_time = INF # otherwise pressing special deletes it on our screen
+	var geometry = platform.get_node("Geometry")
+	geometry.rotation.y = data.ice_turn # has to be after add_child or the game picks a random one
+	geometry.suicide_available_time = INF # otherwise pressing special deletes it on our screen
 	_remote_ice_platforms[owner_id] = platform
+	if not data.has("ice_quiet"):
+		Globals.AUDIO_MANAGER.create_audio(SoundEffect.SOUND_EFFECT_TYPE.ICE_PLATFORM, null, null, null, platform.global_position)
 
 
 func _remove_ice_platform(owner_id: int) -> void:
@@ -618,7 +640,7 @@ func _receive_states() -> void:
 			_update_name_tags()
 			# they missed our ice platform if they just got here
 			if is_instance_valid(_sent_ice_platform):
-				_send(sender, EVENT_CHANNEL, {"ice_platform": _sent_ice_platform.global_position})
+				_send(sender, EVENT_CHANNEL, _sent_ice_message.merged({"ice_quiet": true}))
 		remote_cirno.apply_state(state)
 
 
