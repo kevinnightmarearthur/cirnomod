@@ -4,6 +4,7 @@ extends RefCounted
 
 const TEXTURE_PATH := "res://models/src/Cirno/Cirno_tex_cirno.png"
 const SHADER := preload("res://cirno_goes_online/cirno_colors.gdshader")
+const NOCULL_SHADER := preload("res://cirno_goes_online/cirno_colors_nocull.gdshader")
 
 # first color is the one you pick, the darker ones follow it
 const REGIONS = {
@@ -30,21 +31,22 @@ static func apply(skeleton: Skeleton3D, colors: Dictionary) -> void:
 			new_colors.append(_shade_like(colors[region], shades[0], shade))
 
 	for mesh in skeleton.get_children():
-		if not mesh is MeshInstance3D:
+		# wings keep the game's material, it brightens them while floating
+		if not mesh is MeshInstance3D or mesh.name == "Wings":
 			continue
 		for i in mesh.get_surface_override_material_count():
 			var material = mesh.get_active_material(i)
 			if material is BaseMaterial3D and material.albedo_texture and material.albedo_texture.resource_path == TEXTURE_PATH:
 				material = _make_material(material)
 				mesh.set_surface_override_material(i, material)
-			if material is ShaderMaterial and material.shader == SHADER:
+			if material is ShaderMaterial and material.shader in [SHADER, NOCULL_SHADER]:
 				material.set_shader_parameter("old_colors", old_colors)
 				material.set_shader_parameter("new_colors", new_colors)
 
 
 static func _make_material(original: BaseMaterial3D) -> ShaderMaterial:
 	var material = ShaderMaterial.new()
-	material.shader = SHADER
+	material.shader = NOCULL_SHADER if original.cull_mode == BaseMaterial3D.CULL_DISABLED else SHADER
 	material.set_shader_parameter("albedo_texture", original.albedo_texture)
 	return material
 
