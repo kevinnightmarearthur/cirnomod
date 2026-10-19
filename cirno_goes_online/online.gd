@@ -220,6 +220,16 @@ func set_show_name_tags(shown: bool) -> void:
 	_settings_changed()
 
 
+func set_cirno_color(region: String, color: Color) -> void:
+	cirno_colors[region] = color
+	_settings_changed()
+
+
+func reset_cirno_colors() -> void:
+	cirno_colors = CirnoColors.default_colors()
+	_settings_changed()
+
+
 # the game doesnt really pause online so cirno has to be locked in the pause menu, and while typing in chat
 func update_player_controls() -> void:
 	var player = Globals.PLAYER
@@ -243,6 +253,8 @@ func _settings_changed() -> void:
 	var err = cfg.save(SETTINGS_PATH)
 	if err != OK:
 		push_error("Cirno Goes Online: couldn't save settings, error " + str(err))
+	if is_instance_valid(Globals.PLAYER):
+		_recolor_own_cirno(Globals.PLAYER)
 	if in_lobby():
 		Steam.setLobbyMemberData(lobby_id, "name", own_name())
 		_update_name_tags()

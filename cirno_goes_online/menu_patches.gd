@@ -6,6 +6,8 @@ const MultiplayerMenuScene := preload("res://cirno_goes_online/multiplayer_menu.
 const UI_THEME := preload("res://theme_stuff/themes/UITheme.tres")
 const LABEL_SETTINGS := preload("res://theme_stuff/label_settings/ui_label_default.tres")
 const FONT := preload("res://theme_stuff/fonts/base_fonts/Unispace Rg.otf")
+const MENU_FONT := preload("res://theme_stuff/fonts/font_variations/Citrustime_normal.tres")
+const POPUP_FRAME := preload("res://sprites/ui/popup/popup_menu.png")
 
 
 func _ready() -> void:
@@ -76,11 +78,34 @@ func _add_online_settings(menu: Control) -> void:
 	var name_tags = CheckBox.new()
 	_add_row(options, "NICKNAME", nickname)
 	_add_row(options, "NAME TAGS", name_tags)
+	var color_buttons = {}
+	var picker_theme = _picker_theme()
+	var frame = StyleBoxTexture.new()
+	frame.texture = POPUP_FRAME
+	frame.set_texture_margin_all(20)
+	frame.set_content_margin_all(28)
+	for region in Online.cirno_colors:
+		var button = ColorPickerButton.new()
+		button.edit_alpha = false
+		button.edit_intensity = false
+		var picker = button.get_picker()
+		picker.picker_shape = ColorPicker.SHAPE_HSV_WHEEL
+		picker.sampler_visible = false
+		picker.color_modes_visible = false
+		picker.sliders_visible = false
+		picker.presets_visible = false
+		picker.theme = picker_theme
+		button.get_popup().add_theme_stylebox_override("panel", frame)
+		button.popup_closed.connect(func(): Online.set_cirno_color(region, button.color))
+		_add_row(options, region.to_upper() + " COLOR", button)
+		color_buttons[region] = button
 
 	var refresh = func():
 		nickname.text = Online.nickname
 		nickname.placeholder_text = Online.own_name() if Online.nickname == "" else ""
 		name_tags.set_pressed_no_signal(Online.show_name_tags)
+		for region in color_buttons:
+			color_buttons[region].color = Online.cirno_colors[region]
 	refresh.call()
 
 	nickname.text_submitted.connect(func(_text): nickname.release_focus())
@@ -89,13 +114,14 @@ func _add_online_settings(menu: Control) -> void:
 		refresh.call()
 	)
 	name_tags.toggled.connect(Online.set_show_name_tags)
-	for control in [nickname, name_tags]:
+	for control in [nickname, name_tags] + color_buttons.values():
 		control.focus_entered.connect(func(): menu._belated_move.call_deferred(control.global_position.y))
 		control.mouse_entered.connect(control.grab_focus)
 
 	menu.get_node("%ButtonReset").pressed.connect(func():
 		Online.set_nickname("")
 		Online.set_show_name_tags(true)
+		Online.reset_cirno_colors()
 		refresh.call()
 	)
 
@@ -127,6 +153,39 @@ func _add_row(options: Control, text: String, control: Control) -> void:
 	row.add_child(label)
 	row.add_child(control)
 	options.add_child(row)
+
+
+# without this the # button grabs the big menu button font and the hex box ends up huge
+func _picker_theme() -> Theme:
+	var theme = Theme.new()
+	theme.default_font = MENU_FONT
+	theme.default_font_size = 32
+	theme.set_font("font", "Button", MENU_FONT)
+	theme.set_font_size("font_size", "Button", 32)
+	theme.set_constant("outline_size", "Button", 0)
+	theme.set_color("font_color", "Button", Color(0.5, 0.5, 0.5))
+	theme.set_color("font_hover_color", "Button", Color.WHITE)
+	theme.set_color("font_pressed_color", "Button", Color.WHITE)
+	theme.set_color("font_focus_color", "Button", Color.WHITE)
+	var empty = StyleBoxEmpty.new()
+	for state in ["normal", "hover", "pressed", "focus", "disabled"]:
+		theme.set_stylebox(state, "Button", empty)
+
+	var field = StyleBoxFlat.new()
+	field.bg_color = Color.BLACK
+	field.set_border_width_all(2)
+	field.border_color = Color(0.5, 0.5, 0.5)
+	field.content_margin_left = 10
+	field.content_margin_right = 10
+	field.content_margin_top = 4
+	field.content_margin_bottom = 4
+	var field_focus = field.duplicate()
+	field_focus.border_color = Color.WHITE
+	theme.set_stylebox("normal", "LineEdit", field)
+	theme.set_stylebox("focus", "LineEdit", field_focus)
+	theme.set_color("font_color", "LineEdit", Color.WHITE)
+	theme.set_color("caret_color", "LineEdit", Color.WHITE)
+	return theme
 
 
 func _nickname_box(border: Color) -> StyleBoxFlat:
