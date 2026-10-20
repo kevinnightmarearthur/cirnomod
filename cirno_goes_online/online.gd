@@ -230,6 +230,15 @@ func reset_cirno_colors() -> void:
 	_settings_changed()
 
 
+func player_cirno_colors(id: int) -> Dictionary:
+	var colors = CirnoColors.default_colors()
+	for region in colors:
+		var html = Steam.getLobbyMemberData(lobby_id, id, region + "_color")
+		if Color.html_is_valid(html):
+			colors[region] = Color.html(html)
+	return colors
+
+
 # the game doesnt really pause online so cirno has to be locked in the pause menu, and while typing in chat
 func update_player_controls() -> void:
 	var player = Globals.PLAYER
@@ -256,8 +265,15 @@ func _settings_changed() -> void:
 	if is_instance_valid(Globals.PLAYER):
 		_recolor_own_cirno(Globals.PLAYER)
 	if in_lobby():
-		Steam.setLobbyMemberData(lobby_id, "name", own_name())
+		_share_player_info()
 		_update_name_tags()
+
+
+# everyone else reads these from the lobby
+func _share_player_info() -> void:
+	Steam.setLobbyMemberData(lobby_id, "name", own_name())
+	for region in cirno_colors:
+		Steam.setLobbyMemberData(lobby_id, region + "_color", cirno_colors[region].to_html(false))
 
 
 func _load_settings() -> void:
@@ -353,7 +369,7 @@ func _on_lobby_joined(id: int, _permissions: int, _locked: bool, response: int) 
 		return
 
 	Steam.setRichPresence("connect", "+connect_lobby %d" % id)
-	Steam.setLobbyMemberData(id, "name", own_name())
+	_share_player_info()
 	lobby_changed.emit()
 
 
@@ -648,6 +664,7 @@ func _receive_states() -> void:
 				continue
 			remote_cirno = RemoteCirnoScene.instantiate()
 			Globals.LEVEL_NODE.add_child(remote_cirno)
+			remote_cirno.set_colors(player_cirno_colors(sender))
 			remote_cirnos[sender] = remote_cirno
 			_update_name_tags()
 			# they missed our ice platform if they just got here

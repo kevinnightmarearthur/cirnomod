@@ -4,6 +4,7 @@ const SMOOTHING := 15.0
 
 const NOCULL_MATERIAL := preload("res://models/src/Cirno/material_cirno_nocull.tres")
 const WING_MATERIAL := preload("res://models/src/Cirno/material_cirno_wing_stuff.tres")
+const CirnoColors := preload("res://cirno_goes_online/cirno_colors.gd")
 
 var last_heard_ms := 0
 
@@ -14,10 +15,10 @@ var target_scale = Vector3.ONE
 @onready var name_tag: Label3D = $NameTag
 @onready var skin: Node3D = $Skin
 @onready var anim: AnimationPlayer = $Skin/AnimationPlayer
+@onready var skeleton: Skeleton3D = $Skin/Armature/Skeleton3D
 
 
 func _ready() -> void:
-	var skeleton = $Skin/Armature/Skeleton3D
 	for mesh in skeleton.get_children():
 		if mesh is MeshInstance3D:
 			mesh.layers = 2 # no blob shadow on her
@@ -26,6 +27,10 @@ func _ready() -> void:
 	skeleton.get_node("Skirt").set_surface_override_material(0, NOCULL_MATERIAL)
 	skeleton.get_node("Wings").set_surface_override_material(0, WING_MATERIAL)
 	anim.playback_default_blend_time = 0.18
+
+
+func set_colors(colors: Dictionary) -> void:
+	CirnoColors.apply(skeleton, colors)
 
 
 func apply_state(state: Dictionary) -> void:
