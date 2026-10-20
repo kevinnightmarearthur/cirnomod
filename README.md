@@ -9,6 +9,8 @@ Online co-op multiplayer mod for [Cirno! Lifts a Boulder](https://store.steampow
 - **Everything is synced** - item pickups, frogs and ice platforms are synced between players
 - **Chat** - press T (rebindable in the controls menu) to talk to your lobby
 - **Settings** - nickname, name tags and other multiplayer options are in Gameplay
+- **Custom Colors** - change the color of your cirno in gameplay options
+- **Player Interactions** - push people or jump on their heads for funsies
 
 ## Installation
 
