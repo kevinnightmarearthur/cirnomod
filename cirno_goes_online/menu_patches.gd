@@ -114,7 +114,8 @@ func _add_online_settings(menu: Control) -> void:
 		refresh.call()
 	)
 	name_tags.toggled.connect(Online.set_show_name_tags)
-	for control in [nickname, name_tags] + color_buttons.values():
+	var controls = [nickname, name_tags] + color_buttons.values()
+	for control in controls:
 		control.focus_entered.connect(func(): menu._belated_move.call_deferred(control.global_position.y))
 		control.mouse_entered.connect(control.grab_focus)
 
@@ -129,10 +130,11 @@ func _add_online_settings(menu: Control) -> void:
 	var guide_light = menu.get_node("%GuideLightCheck")
 	var reset = menu.get_node("%ButtonReset")
 	var delete_save = menu.get_node("%ButtonDeleteSave")
+	var last = controls.back()
 	guide_light.focus_neighbor_bottom = guide_light.get_path_to(nickname)
-	name_tags.focus_neighbor_bottom = name_tags.get_path_to(reset)
-	reset.focus_neighbor_top = reset.get_path_to(name_tags)
-	delete_save.focus_neighbor_top = delete_save.get_path_to(name_tags)
+	last.focus_neighbor_bottom = last.get_path_to(reset)
+	reset.focus_neighbor_top = reset.get_path_to(last)
+	delete_save.focus_neighbor_top = delete_save.get_path_to(last)
 
 
 func _add_row(options: Control, text: String, control: Control) -> void:
