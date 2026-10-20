@@ -1,6 +1,6 @@
 extends RefCounted
 
-# swaps the colors on cirnos texture so everyone can have their own hair, dress and bow
+# swaps the colors on cirnos texture so everyone can have their own hair, dress, bows and wings
 
 const TEXTURE_PATH := "res://models/src/Cirno/Cirno_tex_cirno.png"
 const SHADER := preload("res://cirno_goes_online/cirno_colors.gdshader")
@@ -11,6 +11,8 @@ const REGIONS = {
 	"hair": [Color("abeefe"), Color("4ca4e7"), Color("2764a4"), Color("1f3c7b")],
 	"dress": [Color("2663ef"), Color("1734ab"), Color("17114b")],
 	"bow": [Color("f64b4b"), Color("ab1e1e")],
+	"back_bow": [Color("18936b"), Color("115344"), Color("102d26")],
+	"wings": [Color("b4f7ef"), Color("92bbe6")],
 }
 
 

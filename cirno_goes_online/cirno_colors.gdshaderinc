@@ -1,6 +1,6 @@
 uniform sampler2D albedo_texture : source_color, filter_nearest, repeat_disable;
-uniform vec4 old_colors[9];
-uniform vec4 new_colors[9];
+uniform vec4 old_colors[14];
+uniform vec4 new_colors[14];
 
 void fragment() {
 	vec3 color = texture(albedo_texture, UV).rgb;
