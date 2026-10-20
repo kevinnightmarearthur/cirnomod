@@ -403,6 +403,9 @@ func _on_host_left() -> void:
 func _on_lobby_data_update(_success: bool, id: int, _member_id: int) -> void:
 	if id == lobby_id:
 		_update_name_tags()
+		for member_id in remote_cirnos:
+			if is_instance_valid(remote_cirnos[member_id]):
+				remote_cirnos[member_id].set_colors(player_cirno_colors(member_id))
 		lobby_changed.emit()
 
 
