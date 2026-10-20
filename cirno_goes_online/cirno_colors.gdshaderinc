@@ -1,6 +1,7 @@
 uniform sampler2D albedo_texture : source_color, filter_nearest, repeat_disable;
 uniform vec4 old_colors[14];
 uniform vec4 new_colors[14];
+uniform float glow = 1.0;
 
 void fragment() {
 	vec3 color = texture(albedo_texture, UV).rgb;
@@ -10,7 +11,7 @@ void fragment() {
 			break;
 		}
 	}
-	ALBEDO = color;
+	ALBEDO = color * glow;
 
 	// same up close fade as the game's cirno material
 	float fade = smoothstep(1.0, 1.25, length(VERTEX));

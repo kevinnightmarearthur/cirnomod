@@ -49,6 +49,7 @@ func apply_state(state: Dictionary) -> void:
 
 
 func _process(delta: float) -> void:
+	CirnoColors.copy_wing_glow(skeleton)
 	var t = 1.0 - exp(-SMOOTHING * delta)
 	global_position = global_position.lerp(target_pos, t)
 	var rot = skin.basis.get_rotation_quaternion().slerp(target_rot, t)

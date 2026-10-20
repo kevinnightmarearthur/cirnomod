@@ -5,7 +5,7 @@ extends Node
 signal lobby_changed
 signal lobby_error(message: String)
 
-const MOD_VERSION := "3.0.0"
+const MOD_VERSION := "3.0.2"
 const MAX_PLAYERS := 8
 const SEND_RATE = 30.0
 const SILENCE_TIMEOUT_MS = 3000 # menus, loading, or they left
@@ -455,6 +455,8 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _physics_process(delta: float) -> void:
+	if is_instance_valid(Globals.PLAYER):
+		CirnoColors.copy_wing_glow(Globals.PLAYER.get_node("%Skin/Armature/Skeleton3D"))
 	if not in_lobby():
 		return
 	_receive_events()

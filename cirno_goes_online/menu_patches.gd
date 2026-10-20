@@ -97,7 +97,7 @@ func _add_online_settings(menu: Control) -> void:
 		picker.theme = picker_theme
 		button.get_popup().add_theme_stylebox_override("panel", frame)
 		button.popup_closed.connect(func(): Online.set_cirno_color(region, button.color))
-		_add_row(options, region.to_upper() + " COLOR", button)
+		_add_row(options, region.to_upper().replace("_", " ") + " COLOR", button)
 		color_buttons[region] = button
 
 	var refresh = func():
